@@ -60,7 +60,7 @@ st.write("Model klasifikasi yang digunakan dalam proyek ini adalah: **LightGBM**
 st.write("Model ini dipilih karena memberikan performa terbaik berdasarkan uji evaluasi dan cross-validation.")
 
 # === Load dan Prediksi Data Testing dari GitHub ===
-st.subheader("Preview Data Testing Asli (Test.csv)")
+st.subheader("Preview Data Testing Asli")
 test_url = "https://raw.githubusercontent.com/wilywho/customer-segmentation-multiclass-classification/refs/heads/main/Test.csv"
 try:
     df_test_original = pd.read_csv(test_url)
@@ -69,7 +69,7 @@ except Exception as e:
     st.error(f"Gagal membaca test.csv dari GitHub: {e}")
 
 # === Prediksi dengan Data Encoding ===
-st.subheader("Proses Prediksi Menggunakan Data Testing yang Sudah Encoding (Test_encoding.csv)")
+st.subheader("Proses Prediksi Menggunakan Data Testing")
 test_enc_url = "https://raw.githubusercontent.com/wilywho/customer-segmentation-multiclass-classification/refs/heads/main/Test_encoding.csv"
 try:
     df_test = pd.read_csv(test_enc_url)
