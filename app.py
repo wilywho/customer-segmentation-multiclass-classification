@@ -202,4 +202,7 @@ elif input_mode == "Input Manual":
                 df_scaled = df_input_features.values
 
             prediction = model.predict(df_scaled)[0]
-            st.success(f"Segmentasi Pelanggan yang Diprediksi: **{
+            st.success(f"Segmentasi Pelanggan yang Diprediksi: **{prediction}**")
+
+        except Exception as e:
+            st.error(f"Terjadi kesalahan saat memproses input: {e}")
