@@ -70,7 +70,7 @@ try:
     # Drop kolom yang tidak digunakan model
     if 'ID' in df_test.columns:
         df_test = df_test.drop(columns=['ID'])
-    if 'Segmentation' in df_test_enc.columns:
+    if 'Segmentation' in df_test.columns:
         df_test = df_test.drop(columns=['Segmentation'])
 
     # Scaling
