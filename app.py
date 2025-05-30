@@ -21,7 +21,10 @@ Model klasifikasi ini dilatih dari data pelanggan eksisting yang telah dikelompo
 
 # === 3. Data Training Overview ===
 st.subheader("Contoh Data Training & Penjelasan Fitur")
-df_train = pd.read_csv("data_train.csv")  # Data yang digunakan untuk pelatihan
+
+# Url Github
+train_url = "https://github.com/wilywho/customer-segmentation-multiclass-classification/blob/main/Train.csv"
+df_train = pd.read_csv(train_url)
 st.dataframe(df_train.head())
 
 with st.expander("Penjelasan Fitur"):
@@ -54,63 +57,62 @@ st.write("Model klasifikasi yang digunakan dalam proyek ini adalah: **(tulis nam
 st.write("Model ini dipilih karena memberikan performa terbaik berdasarkan uji evaluasi dan cross-validation.")
 
 st.subheader("Pilih Metode Input Data")
-input_mode = st.radio("Pilih metode input:", ("Upload File CSV", "Input Manual"))
+input_mode = st.radio("Pilih metode input:", ("File Testing dari GitHub", "Input Manual"))
 
-if input_mode == "Upload File CSV":
-    uploaded_file = st.file_uploader("Unggah file CSV berisi data pelanggan baru", type=["csv"])
-    
-    if uploaded_file is not None:
-        df_test = pd.read_csv(uploaded_file)
-        st.success("File berhasil diunggah!")
+if input_mode == "File Testing dari GitHub":
+    # Url Github
+    test_url = "https://github.com/wilywho/customer-segmentation-multiclass-classification/blob/main/Test.csv"
+
+    try:
+        df_test = pd.read_csv(test_url)
+        st.success("File test.csv berhasil diambil dari GitHub!")
         st.dataframe(df_test.head())
 
-        try:
-            # Encoding per kolom
-            for col in encoder:
-                if col in df_test.columns:
-                    df_test[col] = encoder[col].transform(df_test[col])
-                else:
-                    st.warning(f"Kolom '{col}' tidak ditemukan di data upload.")
-
-            # Scaling jika ada
-            if scaler is not None:
-                df_scaled = scaler.transform(df_test)
+        # Encoding per kolom
+        for col in encoder:
+            if col in df_test.columns:
+                df_test[col] = encoder[col].transform(df_test[col])
             else:
-                df_scaled = df_test
+                st.warning(f"Kolom '{col}' tidak ditemukan di data test.")
 
-            # Prediksi dan simpan di df_test
-            y_pred = model.predict(df_scaled)
-            df_test['Predicted_Segment'] = y_pred
+        # Scaling jika ada
+        if scaler is not None:
+            df_scaled = scaler.transform(df_test)
+        else:
+            df_scaled = df_test
 
-            st.subheader("Hasil Prediksi")
-            st.dataframe(df_test)
+        # Prediksi
+        y_pred = model.predict(df_scaled)
+        df_test['Predicted_Segment'] = y_pred
 
-            # Evaluasi model jika label asli tersedia
-            if 'Segmentation' in df_test.columns:
-                acc = accuracy_score(df_test['Segmentation'], y_pred)
-                st.metric("Akurasi Model", f"{acc:.2%}")
+        st.subheader("Hasil Prediksi")
+        st.dataframe(df_test)
 
-                st.subheader("Classification Report")
-                report = classification_report(df_test['Segmentation'], y_pred, output_dict=True)
-                st.dataframe(pd.DataFrame(report).transpose())
+        # Evaluasi jika tersedia label asli
+        if 'Segmentation' in df_test.columns:
+            acc = accuracy_score(df_test['Segmentation'], y_pred)
+            st.metric("Akurasi Model", f"{acc:.2%}")
 
-                st.subheader("Confusion Matrix")
-                cm = confusion_matrix(df_test['Segmentation'], y_pred)
-                fig_cm, ax_cm = plt.subplots()
-                sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
-                            xticklabels=np.unique(y_pred),
-                            yticklabels=np.unique(y_pred), ax=ax_cm)
-                ax_cm.set_xlabel("Predicted")
-                ax_cm.set_ylabel("Actual")
-                st.pyplot(fig_cm)
+            st.subheader("Classification Report")
+            report = classification_report(df_test['Segmentation'], y_pred, output_dict=True)
+            st.dataframe(pd.DataFrame(report).transpose())
 
-            # Tombol unduh hasil prediksi
-            csv_download = df_test.to_csv(index=False).encode('utf-8')
-            st.download_button("Unduh Hasil Prediksi", data=csv_download,
-                               file_name="hasil_prediksi.csv", mime='text/csv')
+            st.subheader("Confusion Matrix")
+            cm = confusion_matrix(df_test['Segmentation'], y_pred)
+            fig_cm, ax_cm = plt.subplots()
+            sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
+                        xticklabels=np.unique(y_pred),
+                        yticklabels=np.unique(y_pred), ax=ax_cm)
+            ax_cm.set_xlabel("Predicted")
+            ax_cm.set_ylabel("Actual")
+            st.pyplot(fig_cm)
 
-        except Exception as e:
-            st.error(f"Terjadi kesalahan saat proses prediksi: {e}")
+        csv_download = df_test.to_csv(index=False).encode('utf-8')
+        st.download_button("Unduh Hasil Prediksi", data=csv_download,
+                           file_name="hasil_prediksi.csv", mime='text/csv')
+
+    except Exception as e:
+        st.error(f"Gagal membaca test.csv dari GitHub: {e}")
 
 elif input_mode == "Input Manual":
     st.write("Masukkan data pelanggan secara manual:")
@@ -126,7 +128,6 @@ elif input_mode == "Input Manual":
     var_1 = st.selectbox("Var_1", ["Cat_1", "Cat_2", "Cat_3", "Cat_4", "Cat_5", "Cat_6"])
 
     if st.button("Prediksi Segmentasi"):
-        # Buat DataFrame dari input manual
         df_input = pd.DataFrame({
             "Gender": [gender],
             "Ever_Married": [ever_married],
@@ -137,29 +138,23 @@ elif input_mode == "Input Manual":
         })
 
         try:
-            # Lakukan encoding per kolom sesuai encoder
             for col in encoder:
                 if col in df_input.columns:
-                    df_input[col] = encoder[col].transform(df_input[col].values)
+                    df_input[col] = encoder[col].transform(df_input[col])
                 else:
                     st.warning(f"Kolom '{col}' tidak ditemukan di input manual.")
 
-            # Scaling jika ada
             if scaler is not None:
                 df_scaled = scaler.transform(df_input)
             else:
                 df_scaled = df_input
 
-            # Prediksi
             prediction = model.predict(df_scaled)[0]
-
-            # Tampilkan hasil prediksi
             st.success(f"Segmentasi Pelanggan yang Diprediksi: **{prediction}**")
 
-            # Buat DataFrame hasil prediksi untuk diunduh
             df_result = df_input.copy()
             df_result['Segment_Prediction'] = prediction
-        
+
             csv_result = df_result.to_csv(index=False).encode('utf-8')
             st.download_button(
                 label="Unduh Hasil Prediksi",
