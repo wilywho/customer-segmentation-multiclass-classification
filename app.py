@@ -70,6 +70,8 @@ try:
 
     if 'Segmentation' in df_test.columns:
         df_test = df_test.drop(columns=['Segmentation'])
+    elif 'ID' in df_test.columns:
+        df_test = df_test.drop(columns=['ID'])
 
     # Scaling
     if scaler is not None:
