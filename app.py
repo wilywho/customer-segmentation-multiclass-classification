@@ -68,42 +68,31 @@ if input_mode == "File Testing dari GitHub":
         st.success("File test.csv berhasil diambil dari GitHub!")
         st.dataframe(df_test.head())
 
-        # -- Integrasi One-hot Encoding & Drop Kolom Categorical --
-        heat_dummies = pd.get_dummies(df_test[['Profession', 'Var_1', 'Segmentation']]).astype(int)
-        df_test_dummies = pd.get_dummies(df_test[['Profession', 'Var_1']], drop_first=True).astype(int)
+        # --- Jangan pakai pd.get_dummies di sini karena kamu sudah punya encoder --- #
+        # Hapus kolom target jika ada, karena tidak untuk prediksi
+        if 'Segmentation' in df_test.columns:
+            df_test = df_test.drop(columns=['Segmentation'])
 
-        df_test_origin = df_test.drop(columns=['Profession', 'Var_1', 'Segmentation'])
-        df_test_cleaned = df_test.drop(columns=['Profession', 'Var_1'])
+        # Mapping kategori simple ke numerik dulu untuk kolom yang sudah jelas
+        df_test['Gender'] = df_test['Gender'].str.strip().map({'Male': 0, 'Female': 1})
+        df_test['Ever_Married'] = df_test['Ever_Married'].str.strip().map({'No': 0, 'Yes': 1})
+        df_test['Graduated'] = df_test['Graduated'].str.strip().map({'No': 0, 'Yes': 1})
+        df_test['Spending_Score'] = df_test['Spending_Score'].str.strip().map({'Low': 0, 'Average': 1, 'High': 2})
 
-        # Optional: tampilkan hasil one-hot encoding
-        with st.expander("Lihat One-hot Encoding pada Data Test"):
-            st.write("Dummy variables (Profession, Var_1, Segmentation):")
-            st.dataframe(heat_dummies.head())
-            st.write("Dummy variables (Profession, Var_1) dengan drop_first=True:")
-            st.dataframe(df_test_dummies.head())
-            st.write("Data test asli tanpa kolom Profession, Var_1, Segmentation:")
-            st.dataframe(df_test_origin.head())
-            st.write("Data test tanpa kolom Profession dan Var_1:")
-            st.dataframe(df_test_cleaned.head())
-
-        # -- Lakukan konversi kategori lain ke numerik (Gender, Ever_Married, Graduated, Spending_Score) sebelum encoding/scaling
-        df_test['Gender'] = df_test['Gender'].str.strip()
-        df_test['Gender'] = df_test['Gender'].map({'Male': 0, 'Female': 1})
-        df_test['Ever_Married'] = df_test['Ever_Married'].str.strip()
-        df_test['Ever_Married'] = df_test['Ever_Married'].map({'No': 0, 'Yes': 1})
-        df_test['Graduated'] = df_test['Graduated'].str.strip()
-        df_test['Graduated'] = df_test['Graduated'].map({'No': 0, 'Yes': 1})
-        df_test['Spending_Score'] = df_test['Spending_Score'].str.strip()
-        df_test['Spending_Score'] = df_test['Spending_Score'].map({'Low': 0, 'Average': 1, 'High': 2})
-
-        # -- Encode kolom kategori lain (seperti Profession, Var_1) menggunakan encoder yg sudah diload
+        # Gunakan encoder yang sudah diload untuk kolom kategori lainnya
         for col in encoder:
             if col in df_test.columns:
+                # Pastikan bertipe string sebelum transform
+                df_test[col] = df_test[col].astype(str)
                 df_test[col] = encoder[col].transform(df_test[col])
             else:
                 st.warning(f"Kolom '{col}' tidak ditemukan di data test.")
 
-        # -- Scaling
+        # Pastikan urutan dan fitur sesuai training, jika perlu lakukan reindex
+        feature_cols = encoder['feature_names'] if 'feature_names' in encoder else df_test.columns.tolist()
+        df_test = df_test.reindex(columns=feature_cols, fill_value=0)
+
+        # Scaling data
         if scaler is not None:
             df_scaled = scaler.transform(df_test)
         else:
@@ -116,28 +105,9 @@ if input_mode == "File Testing dari GitHub":
         st.subheader("Hasil Prediksi")
         st.dataframe(df_test)
 
-        # Evaluasi jika tersedia label asli
-        if 'Segmentation' in df_test.columns:
-            acc = accuracy_score(df_test['Segmentation'], y_pred)
-            st.metric("Akurasi Model", f"{acc:.2%}")
-
-            st.subheader("Classification Report")
-            report = classification_report(df_test['Segmentation'], y_pred, output_dict=True)
-            st.dataframe(pd.DataFrame(report).transpose())
-
-            st.subheader("Confusion Matrix")
-            cm = confusion_matrix(df_test['Segmentation'], y_pred)
-            fig_cm, ax_cm = plt.subplots()
-            sns.heatmap(cm, annot=True, fmt='d', cmap='Blues',
-                        xticklabels=np.unique(y_pred),
-                        yticklabels=np.unique(y_pred), ax=ax_cm)
-            ax_cm.set_xlabel("Predicted")
-            ax_cm.set_ylabel("Actual")
-            st.pyplot(fig_cm)
-
-        csv_download = df_test.to_csv(index=False).encode('utf-8')
-        st.download_button("Unduh Hasil Prediksi", data=csv_download,
-                           file_name="hasil_prediksi.csv", mime='text/csv')
+        # Jika label asli ada di file test (misal dari file lain), kamu bisa evaluasi
+        # Namun di sini kita sudah drop kolom Segmentation
+        # Jadi evaluasi dilewati atau gunakan file lain untuk evaluasi
 
     except Exception as e:
         st.error(f"Gagal membaca test.csv dari GitHub: {e}")
