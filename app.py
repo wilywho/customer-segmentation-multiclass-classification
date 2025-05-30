@@ -89,8 +89,16 @@ try:
     y_pred = model.predict(df_scaled)
     df_test['Predicted_Segment'] = y_pred
 
-    # Tampilkan hasil prediksi
-    st.subheader("Hasil Prediksi")
+    # Ambil kolom Segmentation asli dari df_test_original
+    # dan buat mapping A->0, B->1, C->2, D->3
+    seg_map = {'A':0, 'B':1, 'C':2, 'D':3}
+    if 'Segmentation' in df_test_original.columns:
+        df_test_original['Segmentation_Num'] = df_test_original['Segmentation'].map(seg_map)
+        # Gabungkan ke df_test hasil encoding berdasarkan index (urutan baris)
+        df_test['Original_Segment_Num'] = df_test_original['Segmentation_Num'].values
+
+    # Tampilkan hasil prediksi + original segment dalam angka
+    st.subheader("Hasil Prediksi dengan Kolom Segmentation Asli (dalam bentuk angka)")
     st.dataframe(df_test)
 
 except Exception as e:
