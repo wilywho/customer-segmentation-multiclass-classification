@@ -87,19 +87,19 @@ try:
 
     # Prediksi
     y_pred = model.predict(df_scaled)
-    df_test['Predicted_Segment'] = y_pred
+    df_test['Predicted_Segment_Num'] = y_pred
 
-    # Ambil kolom Segmentation asli dari df_test_original
-    # dan buat mapping A->0, B->1, C->2, D->3
-    seg_map = {'A':0, 'B':1, 'C':2, 'D':3}
+    # Mapping angka prediksi ke label A-D
+    inv_seg_map = {0: 'A', 1: 'B', 2: 'C', 3: 'D'}
+    df_test['Predicted_Segment'] = df_test['Predicted_Segment_Num'].map(inv_seg_map)
+
+    # Ambil kolom Segmentation asli dari df_test_original (label A-D)
     if 'Segmentation' in df_test_original.columns:
-        df_test_original['Segmentation_Num'] = df_test_original['Segmentation'].map(seg_map)
-        # Gabungkan ke df_test hasil encoding berdasarkan index (urutan baris)
-        df_test['Original_Segment_Num'] = df_test_original['Segmentation_Num'].values
+        df_test['Original_Segment'] = df_test_original['Segmentation'].values
 
-    # Tampilkan hasil prediksi + original segment dalam angka
-    st.subheader("Hasil Prediksi dengan Kolom Segmentation Asli (dalam bentuk angka)")
-    st.dataframe(df_test)
+    # Tampilkan hasil prediksi + original segment dalam label A-D
+    st.subheader("Hasil Prediksi dengan Kolom Segmentation Asli (Label A-D)")
+    st.dataframe(df_test[['Original_Segment', 'Predicted_Segment']])
 
 except Exception as e:
     st.error(f"Gagal membaca atau memproses Test_enc.csv dari GitHub: {e}")
