@@ -11,8 +11,8 @@ scaler = joblib.load('scaler.pkl')
 
 # === Deskripsi Proyek ===
 st.title("Customer Segmentation Classification")
-st.write("""Author: Author: Kelompok 4 DataBender's
-Nama :
+st.write("""Author: Kelompok 4 DataBender's
+* Nama :
 * Farhan Wily
 * Ghazy Shidqy
 * Naufal Hafizh Dhiya Ulhaq
