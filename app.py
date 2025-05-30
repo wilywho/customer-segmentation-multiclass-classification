@@ -74,11 +74,11 @@ try:
 
     # Encoding kolom kategori lain dengan encoder yang sudah dimuat
      for col in encoder:
-            if col in df_test.columns:
-                df_test[col] = df_test[col].astype(str)
-                df_test[col] = encoder[col].transform(df_test[col])
-            else:
-                st.warning(f"Kolom '{col}' tidak ditemukan di data test.")
+        if col in df_test.columns:
+            df_test[col] = df_test[col].astype(str)
+            df_test[col] = encoder[col].transform(df_test[col])
+        else:
+            st.warning(f"Kolom '{col}' tidak ditemukan di data test.")
 
     # Pastikan kolom sesuai urutan fitur training
     feature_cols = encoder['feature_names'] if 'feature_names' in encoder else df_test.columns.tolist()
