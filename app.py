@@ -67,11 +67,11 @@ st.subheader("Proses Prediksi Menggunakan Data Testing yang Sudah Encoding (Test
 test_enc_url = "https://raw.githubusercontent.com/wilywho/customer-segmentation-multiclass-classification/refs/heads/main/Test_encoding.csv"
 try:
     df_test = pd.read_csv(test_enc_url)
-
-    if 'Segmentation' in df_test.columns:
-        df_test = df_test.drop(columns=['Segmentation'])
-    elif 'ID' in df_test.columns:
+    # Drop kolom yang tidak digunakan model
+    if 'ID' in df_test.columns:
         df_test = df_test.drop(columns=['ID'])
+    if 'Segmentation' in df_test_enc.columns:
+        df_test = df_test.drop(columns=['Segmentation'])
 
     # Scaling
     if scaler is not None:
