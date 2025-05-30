@@ -11,6 +11,12 @@ scaler = joblib.load('scaler.pkl')
 
 # === Deskripsi Proyek ===
 st.title("Customer Segmentation Classification")
+st.write("""Author: Author: Kelompok 4 DataBender's
+Nama :
+* Farhan Wily
+* Ghazy Shidqy
+* Naufal Hafizh Dhiya Ulhaq
+* Yosef Sony Koesprasetyo""")
 st.write("""
 ## Deskripsi Proyek
 Sebuah perusahaan otomotif ingin mengklasifikasikan calon pelanggan baru ke dalam 4 segmen: A, B, C, D.  
