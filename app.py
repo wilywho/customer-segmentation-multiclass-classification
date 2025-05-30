@@ -3,6 +3,7 @@ import pandas as pd
 import joblib
 import matplotlib.pyplot as plt
 import seaborn as sns
+from sklearn.metrics import accuracy_score
 
 # === Load Model, Encoder, Scaler ===
 model = joblib.load('LightGBM.pkl')
@@ -59,8 +60,7 @@ st.write("Model klasifikasi yang digunakan dalam proyek ini adalah: **LightGBM**
 st.write("Model ini dipilih karena memberikan performa terbaik berdasarkan uji evaluasi dan cross-validation.")
 
 # === Load dan Prediksi Data Testing dari GitHub ===
-st.subheader("Preview Data Testing Asli")
-
+st.subheader("Preview Data Testing Asli (Test.csv)")
 test_url = "https://raw.githubusercontent.com/wilywho/customer-segmentation-multiclass-classification/refs/heads/main/Test.csv"
 try:
     df_test_original = pd.read_csv(test_url)
@@ -68,11 +68,12 @@ try:
 except Exception as e:
     st.error(f"Gagal membaca test.csv dari GitHub: {e}")
 
-st.subheader("Proses Prediksi Menggunakan Data Testing")
-
+# === Prediksi dengan Data Encoding ===
+st.subheader("Proses Prediksi Menggunakan Data Testing yang Sudah Encoding (Test_encoding.csv)")
 test_enc_url = "https://raw.githubusercontent.com/wilywho/customer-segmentation-multiclass-classification/refs/heads/main/Test_encoding.csv"
 try:
     df_test = pd.read_csv(test_enc_url)
+
     # Drop kolom yang tidak digunakan model
     if 'ID' in df_test.columns:
         df_test = df_test.drop(columns=['ID'])
@@ -89,17 +90,23 @@ try:
     y_pred = model.predict(df_scaled)
     df_test['Predicted_Segment_Num'] = y_pred
 
-    # Mapping angka prediksi ke label A-D
+    # Mapping angka ke huruf A-D
     inv_seg_map = {0: 'A', 1: 'B', 2: 'C', 3: 'D'}
     df_test['Predicted_Segment'] = df_test['Predicted_Segment_Num'].map(inv_seg_map)
 
-    # Ambil kolom Segmentation asli dari df_test_original (label A-D)
+    # Tambahkan kolom segmentasi asli dari data original
     if 'Segmentation' in df_test_original.columns:
         df_test['Original_Segment'] = df_test_original['Segmentation'].values
 
-    # Tampilkan hasil prediksi + original segment dalam label A-D
-    st.subheader("Hasil Prediksi dengan Kolom Segmentation Asli (Label A-D)")
+    # === Hitung dan tampilkan akurasi ===
+    if 'Original_Segment' in df_test.columns and 'Predicted_Segment' in df_test.columns:
+        accuracy = accuracy_score(df_test['Original_Segment'], df_test['Predicted_Segment'])
+        st.subheader("Akurasi Prediksi pada Data Testing")
+        st.write(f"Akurasi model pada data testing adalah: **{accuracy:.2%}**")
+
+    # === Tampilkan Hasil Prediksi Lengkap ===
+    st.subheader("Hasil Prediksi dan Segmentasi Asli (Label A-D)")
     st.dataframe(df_test[['Original_Segment', 'Predicted_Segment']])
 
 except Exception as e:
-    st.error(f"Gagal membaca atau memproses Test_enc.csv dari GitHub: {e}")
+    st.error(f"Gagal membaca atau memproses Test_encoding.csv dari GitHub: {e}")
