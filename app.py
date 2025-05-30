@@ -7,8 +7,8 @@ import seaborn as sns
 from sklearn.metrics import classification_report, accuracy_score, confusion_matrix
 
 # === 1. Load Model, Encoder, Scaler ===
-model = joblib.load('model_terbaik.pkl')
-encoder = joblib.load('encoder.pkl')
+model = joblib.load('LightGBM.pkl')
+encoder = joblib.load('encoders.pkl')
 scaler = joblib.load('scaler.pkl')
 
 # === 2. Deskripsi Project ===
