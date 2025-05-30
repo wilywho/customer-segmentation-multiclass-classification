@@ -23,7 +23,7 @@ Model klasifikasi ini dilatih dari data pelanggan eksisting yang telah dikelompo
 st.subheader("Contoh Data Training & Penjelasan Fitur")
 
 # Url Github
-train_url = "https://github.com/wilywho/customer-segmentation-multiclass-classification/blob/main/Train.csv"
+train_url = "https://raw.githubusercontent.com/wilywho/customer-segmentation-multiclass-classification/refs/heads/main/Train.csv"
 df_train = pd.read_csv(train_url)
 st.dataframe(df_train.head())
 
@@ -61,7 +61,7 @@ input_mode = st.radio("Pilih metode input:", ("File Testing dari GitHub", "Input
 
 if input_mode == "File Testing dari GitHub":
     # Url Github
-    test_url = "https://github.com/wilywho/customer-segmentation-multiclass-classification/blob/main/Test.csv"
+    test_url = "https://raw.githubusercontent.com/wilywho/customer-segmentation-multiclass-classification/refs/heads/main/Test.csv"
 
     try:
         df_test = pd.read_csv(test_url)
