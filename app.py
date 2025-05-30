@@ -68,30 +68,43 @@ if input_mode == "File Testing dari GitHub":
         st.success("File test.csv berhasil diambil dari GitHub!")
         st.dataframe(df_test.head())
 
-        # --- Mapping kategori manual sebelum encoding ---
+        # -- Integrasi One-hot Encoding & Drop Kolom Categorical --
+        heat_dummies = pd.get_dummies(df_test[['Profession', 'Var_1', 'Segmentation']]).astype(int)
+        df_test_dummies = pd.get_dummies(df_test[['Profession', 'Var_1']], drop_first=True).astype(int)
+
+        df_test_origin = df_test.drop(columns=['Profession', 'Var_1', 'Segmentation'])
+        df_test_cleaned = df_test.drop(columns=['Profession', 'Var_1'])
+
+        # Optional: tampilkan hasil one-hot encoding
+        with st.expander("Lihat One-hot Encoding pada Data Test"):
+            st.write("Dummy variables (Profession, Var_1, Segmentation):")
+            st.dataframe(heat_dummies.head())
+            st.write("Dummy variables (Profession, Var_1) dengan drop_first=True:")
+            st.dataframe(df_test_dummies.head())
+            st.write("Data test asli tanpa kolom Profession, Var_1, Segmentation:")
+            st.dataframe(df_test_origin.head())
+            st.write("Data test tanpa kolom Profession dan Var_1:")
+            st.dataframe(df_test_cleaned.head())
+
+        # -- Lakukan konversi kategori lain ke numerik (Gender, Ever_Married, Graduated, Spending_Score) sebelum encoding/scaling
         df_test['Gender'] = df_test['Gender'].str.strip()
         df_test['Gender'] = df_test['Gender'].map({'Male': 0, 'Female': 1})
-
         df_test['Ever_Married'] = df_test['Ever_Married'].str.strip()
         df_test['Ever_Married'] = df_test['Ever_Married'].map({'No': 0, 'Yes': 1})
-
         df_test['Graduated'] = df_test['Graduated'].str.strip()
         df_test['Graduated'] = df_test['Graduated'].map({'No': 0, 'Yes': 1})
-
         df_test['Spending_Score'] = df_test['Spending_Score'].str.strip()
         df_test['Spending_Score'] = df_test['Spending_Score'].map({'Low': 0, 'Average': 1, 'High': 2})
 
-        # --- Lanjutkan proses encoding (jika encoder masih diperlukan) ---
+        # -- Encode kolom kategori lain (seperti Profession, Var_1) menggunakan encoder yg sudah diload
         for col in encoder:
             if col in df_test.columns:
                 df_test[col] = encoder[col].transform(df_test[col])
             else:
                 st.warning(f"Kolom '{col}' tidak ditemukan di data test.")
 
-        # Scaling fitur
+        # -- Scaling
         if scaler is not None:
-            # Pastikan urutan kolom sama dengan fitur training scaler
-            df_test = df_test.reindex(columns=scaler.feature_names_in_)
             df_scaled = scaler.transform(df_test)
         else:
             df_scaled = df_test
