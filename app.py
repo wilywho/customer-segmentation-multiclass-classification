@@ -56,109 +56,45 @@ st.subheader("Model Klasifikasi yang Digunakan")
 st.write("Model klasifikasi yang digunakan dalam proyek ini adalah: **(tulis nama model di sini)**.")
 st.write("Model ini dipilih karena memberikan performa terbaik berdasarkan uji evaluasi dan cross-validation.")
 
-st.subheader("Pilih Metode Input Data")
-input_mode = st.radio("Pilih metode input:", ("File Testing dari GitHub", "Input Manual"))
+# === Input Data via File Testing dari GitHub saja ===
+st.subheader("Ambil Data Testing dari GitHub")
 
-if input_mode == "File Testing dari GitHub":
-    # Url Github
-    test_url = "https://raw.githubusercontent.com/wilywho/customer-segmentation-multiclass-classification/refs/heads/main/Test.csv"
+test_url = "https://raw.githubusercontent.com/wilywho/customer-segmentation-multiclass-classification/refs/heads/main/Test.csv"
 
-    try:
-        df_test = pd.read_csv(test_url)
-        st.success("File test.csv berhasil diambil dari GitHub!")
-        st.dataframe(df_test.head())
+try:
+    df_test = pd.read_csv(test_url)
+    st.success("File test.csv berhasil diambil dari GitHub!")
+    st.dataframe(df_test.head())
 
-        # --- Jangan pakai pd.get_dummies di sini karena kamu sudah punya encoder --- #
-        # Hapus kolom target jika ada, karena tidak untuk prediksi
-        if 'Segmentation' in df_test.columns:
-            df_test = df_test.drop(columns=['Segmentation'])
+    # --- Proses data test --- #
+    if 'Segmentation' in df_test.columns:
+        df_test = df_test.drop(columns=['Segmentation'])
 
-        # Mapping kategori simple ke numerik dulu untuk kolom yang sudah jelas
-        df_test['Gender'] = df_test['Gender'].str.strip().map({'Male': 0, 'Female': 1})
-        df_test['Ever_Married'] = df_test['Ever_Married'].str.strip().map({'No': 0, 'Yes': 1})
-        df_test['Graduated'] = df_test['Graduated'].str.strip().map({'No': 0, 'Yes': 1})
-        df_test['Spending_Score'] = df_test['Spending_Score'].str.strip().map({'Low': 0, 'Average': 1, 'High': 2})
+    df_test['Gender'] = df_test['Gender'].str.strip().map({'Male': 0, 'Female': 1})
+    df_test['Ever_Married'] = df_test['Ever_Married'].str.strip().map({'No': 0, 'Yes': 1})
+    df_test['Graduated'] = df_test['Graduated'].str.strip().map({'No': 0, 'Yes': 1})
+    df_test['Spending_Score'] = df_test['Spending_Score'].str.strip().map({'Low': 0, 'Average': 1, 'High': 2})
 
-        # Gunakan encoder yang sudah diload untuk kolom kategori lainnya
-        for col in encoder:
-            if col in df_test.columns:
-                # Pastikan bertipe string sebelum transform
-                df_test[col] = df_test[col].astype(str)
-                df_test[col] = encoder[col].transform(df_test[col])
-            else:
-                st.warning(f"Kolom '{col}' tidak ditemukan di data test.")
-
-        # Pastikan urutan dan fitur sesuai training, jika perlu lakukan reindex
-        feature_cols = encoder['feature_names'] if 'feature_names' in encoder else df_test.columns.tolist()
-        df_test = df_test.reindex(columns=feature_cols, fill_value=0)
-
-        # Scaling data
-        if scaler is not None:
-            df_scaled = scaler.transform(df_test)
+    for col in encoder:
+        if col in df_test.columns:
+            df_test[col] = df_test[col].astype(str)
+            df_test[col] = encoder[col].transform(df_test[col])
         else:
-            df_scaled = df_test
+            st.warning(f"Kolom '{col}' tidak ditemukan di data test.")
 
-        # Prediksi
-        y_pred = model.predict(df_scaled)
-        df_test['Predicted_Segment'] = y_pred
+    feature_cols = encoder['feature_names'] if 'feature_names' in encoder else df_test.columns.tolist()
+    df_test = df_test.reindex(columns=feature_cols, fill_value=0)
 
-        st.subheader("Hasil Prediksi")
-        st.dataframe(df_test)
+    if scaler is not None:
+        df_scaled = scaler.transform(df_test)
+    else:
+        df_scaled = df_test
 
-        # Jika label asli ada di file test (misal dari file lain), kamu bisa evaluasi
-        # Namun di sini kita sudah drop kolom Segmentation
-        # Jadi evaluasi dilewati atau gunakan file lain untuk evaluasi
+    y_pred = model.predict(df_scaled)
+    df_test['Predicted_Segment'] = y_pred
 
-    except Exception as e:
-        st.error(f"Gagal membaca test.csv dari GitHub: {e}")
+    st.subheader("Hasil Prediksi")
+    st.dataframe(df_test)
 
-elif input_mode == "Input Manual":
-    st.write("Masukkan data pelanggan secara manual:")
-
-    gender = st.selectbox("Gender", ["Male", "Female"])
-    ever_married = st.selectbox("Pernah Menikah?", ["Yes", "No"])
-    graduated = st.selectbox("Lulusan Perguruan Tinggi?", ["Yes", "No"])
-    profession = st.selectbox("Profesi", [
-        "Healthcare", "Engineer", "Lawyer", "Marketing", "Executive",
-        "Artist", "Doctor", "Entertainment", "Homemaker"
-    ])
-    spending_score = st.selectbox("Skor Pengeluaran", ["Low", "Average", "High"])
-    var_1 = st.selectbox("Var_1", ["Cat_1", "Cat_2", "Cat_3", "Cat_4", "Cat_5", "Cat_6"])
-
-    if st.button("Prediksi Segmentasi"):
-        df_input = pd.DataFrame({
-            "Gender": [gender],
-            "Ever_Married": [ever_married],
-            "Graduated": [graduated],
-            "Profession": [profession],
-            "Spending_Score": [spending_score],
-            "Var_1": [var_1]
-        })
-
-        try:
-            for col in encoder:
-                if col in df_input.columns:
-                    df_input[col] = encoder[col].transform(df_input[col])
-                else:
-                    st.warning(f"Kolom '{col}' tidak ditemukan di input manual.")
-
-            if scaler is not None:
-                df_scaled = scaler.transform(df_input)
-            else:
-                df_scaled = df_input
-
-            prediction = model.predict(df_scaled)[0]
-            st.success(f"Segmentasi Pelanggan yang Diprediksi: **{prediction}**")
-
-            df_result = df_input.copy()
-            df_result['Segment_Prediction'] = prediction
-
-            csv_result = df_result.to_csv(index=False).encode('utf-8')
-            st.download_button(
-                label="Unduh Hasil Prediksi",
-                data=csv_result,
-                file_name='hasil_prediksi_manual.csv',
-                mime='text/csv')
-
-        except Exception as e:
-            st.error(f"Terjadi kesalahan saat prediksi input manual: {e}")
+except Exception as e:
+    st.error(f"Gagal membaca test.csv dari GitHub: {e}")
