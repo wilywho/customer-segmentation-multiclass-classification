@@ -18,7 +18,7 @@ Model klasifikasi ini dilatih dari data pelanggan eksisting yang telah dikelompo
 """)
 
 # === Tampilkan Data Training & Penjelasan Fitur ===
-st.subheader("Contoh Data Training & Penjelasan Fitur")
+st.subheader("Data Training & Penjelasan Fitur")
 train_url = "https://raw.githubusercontent.com/wilywho/customer-segmentation-multiclass-classification/refs/heads/main/Train.csv"
 df_train = pd.read_csv(train_url)
 st.dataframe(df_train.head())
@@ -53,36 +53,23 @@ st.write("Model klasifikasi yang digunakan dalam proyek ini adalah: **LightGBM**
 st.write("Model ini dipilih karena memberikan performa terbaik berdasarkan uji evaluasi dan cross-validation.")
 
 # === Load dan Prediksi Data Testing dari GitHub ===
-st.subheader("Ambil Data Testing dari GitHub")
+st.subheader("Preview Data Testing Asli (Test.csv)")
 
 test_url = "https://raw.githubusercontent.com/wilywho/customer-segmentation-multiclass-classification/refs/heads/main/Test.csv"
-
 try:
-    df_test = pd.read_csv(test_url)
-    st.success("File test.csv berhasil diambil dari GitHub!")
-    st.dataframe(df_test.head())
+    df_test_original = pd.read_csv(test_url)
+    st.dataframe(df_test_original.head())
+except Exception as e:
+    st.error(f"Gagal membaca test.csv dari GitHub: {e}")
 
-    # Preprocessing data testing
+st.subheader("Proses Prediksi Menggunakan Data Testing yang Sudah Encoding (Test_enc.csv)")
+
+test_enc_url = "https://raw.githubusercontent.com/wilywho/customer-segmentation-multiclass-classification/refs/heads/main/Test_encoding.csv"
+try:
+    df_test = pd.read_csv(test_enc_url)
+
     if 'Segmentation' in df_test.columns:
         df_test = df_test.drop(columns=['Segmentation'])
-
-    # Mapping manual kategori simple
-    df_test['Gender'] = df_test['Gender'].str.strip().map({'Male': 0, 'Female': 1})
-    df_test['Ever_Married'] = df_test['Ever_Married'].str.strip().map({'No': 0, 'Yes': 1})
-    df_test['Graduated'] = df_test['Graduated'].str.strip().map({'No': 0, 'Yes': 1})
-    df_test['Spending_Score'] = df_test['Spending_Score'].str.strip().map({'Low': 0, 'Average': 1, 'High': 2})
-
-    # Encoding kolom kategori lain dengan encoder yang sudah dimuat
-    for col in encoder:
-        if col in df_test.columns:
-            df_test[col] = df_test[col].astype(str)
-            df_test[col] = encoder[col].transform(df_test[col])
-        else:
-            st.warning(f"Kolom '{col}' tidak ditemukan di data test.")
-
-    # Pastikan kolom sesuai urutan fitur training
-    feature_cols = encoder['feature_names'] if 'feature_names' in encoder else df_test.columns.tolist()
-    df_test = df_test.reindex(columns=feature_cols, fill_value=0)
 
     # Scaling
     if scaler is not None:
@@ -99,4 +86,4 @@ try:
     st.dataframe(df_test)
 
 except Exception as e:
-    st.error(f"Gagal membaca atau memproses test.csv dari GitHub: {e}")
+    st.error(f"Gagal membaca atau memproses Test_enc.csv dari GitHub: {e}")
