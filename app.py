@@ -73,7 +73,7 @@ try:
     df_test['Spending_Score'] = df_test['Spending_Score'].str.strip().map({'Low': 0, 'Average': 1, 'High': 2})
 
     # Encoding kolom kategori lain dengan encoder yang sudah dimuat
-     for col in encoder:
+    for col in encoder:
         if col in df_test.columns:
             df_test[col] = df_test[col].astype(str)
             df_test[col] = encoder[col].transform(df_test[col])
