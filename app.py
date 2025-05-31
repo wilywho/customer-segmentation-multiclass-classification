@@ -5,28 +5,26 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 from sklearn.metrics import accuracy_score
 
-# === Load Model, Encoder, dan Scaler ===
-model = joblib.load("LightGBM.pkl")
-encoder = joblib.load("encoders.pkl")  # dictionary LabelEncoders
-scaler = joblib.load("scaler.pkl")     # StandardScaler atau MinMaxScaler
+# === Load Model, Encoder, Scaler ===
+model = joblib.load('LightGBM.pkl')
+encoder = joblib.load('encoders.pkl')
+scaler = joblib.load('scaler.pkl')
 
-# === Judul dan Deskripsi Proyek ===
+# === Deskripsi Proyek ===
 st.title("Customer Segmentation Classification")
-st.write("""
-### Author: Kelompok 4 DataBender's
-- Farhan Wily
-- Ghazy Shidqy
-- Naufal Hafizh Dhiya Ulhaq
-- Yosef Sony Koesprasetyo
-""")
-
+st.write("""Author: Kelompok 4 DataBender's
+* Nama :
+* Farhan Wily
+* Ghazy Shidqy
+* Naufal Hafizh Dhiya Ulhaq
+* Yosef Sony Koesprasetyo""")
 st.write("""
 ## Deskripsi Proyek
 Sebuah perusahaan otomotif ingin mengklasifikasikan calon pelanggan baru ke dalam 4 segmen: A, B, C, D.  
 Model klasifikasi ini dilatih dari data pelanggan eksisting yang telah dikelompokkan sebelumnya oleh tim sales.
 """)
 
-# === Load dan Tampilkan Data Training ===
+# === Tampilkan Data Training & Penjelasan Fitur ===
 st.subheader("Data Training & Penjelasan Fitur")
 train_url = "https://raw.githubusercontent.com/wilywho/customer-segmentation-multiclass-classification/refs/heads/main/Train.csv"
 df_train = pd.read_csv(train_url)
@@ -45,25 +43,23 @@ with st.expander("Penjelasan Fitur"):
     - Segmentation: Target kelas (A, B, C, D)
     """)
 
-# === Visualisasi Umum ===
+# === Visualisasi Data Training ===
 st.subheader("Visualisasi Umum Data Training")
 fig, ax = plt.subplots()
-sns.countplot(data=df_train, x='Segmentation', palette='Set2', ax=ax)
+sns.countplot(data=df_train, x='Segmentation', palette='pastel', ax=ax)
 st.pyplot(fig)
 
 fig2, ax2 = plt.subplots()
-sns.histplot(df_train['Age'], bins=20, kde=True, color='skyblue', ax=ax2)
-ax2.set_title("Distribusi Umur")
+sns.histplot(df_train['Age'], kde=True, bins=20, color='skyblue', ax=ax2)
+ax2.set_title("Distribusi Usia")
 st.pyplot(fig2)
 
-# === Deskripsi Model ===
-st.subheader("Model yang Digunakan")
-st.write("""
-Model klasifikasi terbaik dari hasil evaluasi adalah: **LightGBM**  
-Model ini memiliki akurasi tinggi dan efisiensi yang baik.
-""")
+# === Penjelasan Model ===
+st.subheader("Model Klasifikasi yang Digunakan")
+st.write("Model klasifikasi yang digunakan dalam proyek ini adalah: **LightGBM**.")
+st.write("Model ini dipilih karena memberikan performa terbaik berdasarkan uji evaluasi dan cross-validation.")
 
-# === Load Data Testing Asli dari GitHub ===
+# === Load dan Prediksi Data Testing dari GitHub ===
 st.subheader("Preview Data Testing Asli")
 test_url = "https://raw.githubusercontent.com/wilywho/customer-segmentation-multiclass-classification/refs/heads/main/Test.csv"
 try:
@@ -72,76 +68,47 @@ try:
 except Exception as e:
     st.error(f"Gagal membaca test.csv dari GitHub: {e}")
 
-# === Proses Prediksi dari Test_encoding.csv ===
-st.subheader("Hasil Prediksi pada Data Testing")
+# === Prediksi dengan Data Encoding ===
+st.subheader("Proses Prediksi Menggunakan Data Testing")
+test_enc_url = "https://raw.githubusercontent.com/wilywho/customer-segmentation-multiclass-classification/refs/heads/main/Test_encoding.csv"
 try:
-    test_enc_url = "https://raw.githubusercontent.com/wilywho/customer-segmentation-multiclass-classification/refs/heads/main/Test_encoding.csv"
     df_test = pd.read_csv(test_enc_url)
 
+    # Drop kolom yang tidak digunakan model
     if 'ID' in df_test.columns:
         df_test = df_test.drop(columns=['ID'])
     if 'Segmentation' in df_test.columns:
         df_test = df_test.drop(columns=['Segmentation'])
 
-    df_scaled = scaler.transform(df_test)
+    # Scaling
+    if scaler is not None:
+        df_scaled = scaler.transform(df_test)
+    else:
+        df_scaled = df_test
+
+    # Prediksi
     y_pred = model.predict(df_scaled)
-
     df_test['Predicted_Segment_Num'] = y_pred
-    seg_map = {0: 'A', 1: 'B', 2: 'C', 3: 'D'}
-    df_test['Predicted_Segment'] = df_test['Predicted_Segment_Num'].map(seg_map)
 
+    # Mapping angka ke huruf A-D
+    inv_seg_map = {0: 'A', 1: 'B', 2: 'C', 3: 'D'}
+    df_test['Predicted_Segment'] = df_test['Predicted_Segment_Num'].map(inv_seg_map)
+
+    # Tambahkan kolom segmentasi asli dari data original
     if 'Segmentation' in df_test_original.columns:
-        df_test['Original_Segment'] = df_test_original['Segmentation']
+        df_test['Original_Segment'] = df_test_original['Segmentation'].values
 
-    # Hitung akurasi
-    if 'Original_Segment' in df_test.columns:
-        acc = accuracy_score(df_test['Original_Segment'], df_test['Predicted_Segment'])
-        st.write(f"**Akurasi model pada data testing:** {acc:.2%}")
+    # === Hitung dan tampilkan akurasi ===
+    if 'Original_Segment' in df_test.columns and 'Predicted_Segment' in df_test.columns:
+        accuracy = accuracy_score(df_test['Original_Segment'], df_test['Predicted_Segment'])
+        st.subheader("Akurasi Prediksi pada Data Testing")
+        st.write(f"Akurasi model pada data testing adalah: **{accuracy:.2%}**")
 
+    # === Tampilkan Hasil Prediksi Lengkap ===
+    st.subheader("Hasil Prediksi dan Segmentasi Asli (Label A-D)")
     st.dataframe(df_test[['Original_Segment', 'Predicted_Segment']])
 
 except Exception as e:
-    st.error(f"Gagal membaca atau memproses Test_encoding.csv: {e}")
-
-# === Input Manual untuk Prediksi ===
-st.subheader("Prediksi Segmentasi Pelanggan Baru (Input Manual)")
-with st.form("manual_form"):
-    gender = st.selectbox("Gender", ["Male", "Female"])
-    married = st.selectbox("Ever Married", ["Yes", "No"])
-    age = st.slider("Age", 18, 90, 30)
-    graduated = st.selectbox("Graduated", ["Yes", "No"])
-    profession = st.selectbox("Profession", [
-        "Healthcare", "Engineer", "Lawyer", "Artist", "Doctor",
-        "Entertainment", "Executive", "Marketing", "Homemaker"
-    ])
-    work_exp = st.slider("Work Experience", 0, 20, 1)
-    spending = st.selectbox("Spending Score", ["Low", "Average", "High"])
-    family_size = st.slider("Family Size", 1, 10, 3)
-
-    submit = st.form_submit_button("Prediksi")
-
-    if submit:
-        user_df = pd.DataFrame([{
-            "Gender": gender,
-            "Ever_Married": married,
-            "Age": age,
-            "Graduated": graduated,
-            "Profession": profession,
-            "Work_Experience": work_exp,
-            "Spending_Score": spending,
-            "Family_Size": family_size
-        }])
-
-        # Encoding fitur kategori
-        for col in encoder:
-            if col in user_df.columns:
-                user_df[col] = encoder[col].transform(user_df[col])
-
-        # Scaling
-        user_scaled = scaler.transform(user_df)
-
-        # Prediksi
-        pred_class = model.predict(user_scaled)[0]
-        pred_segment = seg_map.get(pred_class, "Unknown")
+    st.error(f"Gagal membaca atau memproses Test_encoding.csv dari GitHub: {e}")
 
         st.success(f"Segmentasi Pelanggan yang Diprediksi: **{pred_segment}**")
